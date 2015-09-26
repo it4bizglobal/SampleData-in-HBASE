@@ -1,20 +1,23 @@
+###E-mail content received from by Brian Hagan on Sep, 1, 2015.
 
-
-Why did I do this?
+#Why did I do this?
 Just because.
 To demonstrate that you can store OLAP data in HBASE and perform reporting and analytics via Phoenix in my favorite BI Tool.
 To help demonstrate all of the existing reports using HBASE.
 
-Software Used
+#Software Used
 PDI 5.4.0.1-130
 BA Server 5.4.0.1-130
 HDP 2.3 Sandbox
 
 Use PDI to copy the tables from Hypersonic to MySQL – I always like data in MySQL – you don’t have to do this because I’ve included all tables as csv. This is just here to show what I did.
 
-Why Not Use PDI for the whole thing? - See Troubleshooting at the end
+#Why Not Use PDI for the whole thing? - See Troubleshooting at the end
 
-Update NULL fields in Existing SampleData Tables – Phoenix import did not like NULL values – Again, you don’t have to do this because I’ve included all tables as csv. This is just here to show what I did.
+Update NULL fields in Existing SampleData Tables – Phoenix import did not like NULL values – Again, you don’t have to do this
+because I’ve included all tables as csv. This is just here to show what I did.
+
+``` 
 update orders set comments = IFNULL(comments, "NONE”);
 update orders set shippeddate = IFNULL(shippeddate, "2020-01-01”);
 update orderfact set comments = IFNULL(comments, "NONE”);
@@ -24,7 +27,13 @@ update employees set ADDRESSLINE2 = IFNULL(ADDRESSLINE2, "NONE”);
 update employees set reportsto = IFNULL(reportsto, -1);
 update customer_w_ter set employeenumber = IFNULL(employeenumber, -1);
 
+``` 
+
+
 Export SampleData Tables from MySQL to CSV Files – CSV Files Attached
+
+``` 
+
 select CUSTOMERNUMBER, CUSTOMERNAME,CONTACTLASTNAME,CONTACTFIRSTNAME,PHONE,CITY,STATE,POSTALCODE,COUNTRY,SALESREPEMPLOYEENUMBER,CREDITLIMIT  into outfile '/tmp/customers.csv' fields optionally enclosed by '"' terminated by ',' lines terminated by '\n' from customers;
 select CUSTOMERNUMBER, CUSTOMERNAME,CONTACTLASTNAME,CONTACTFIRSTNAME,PHONE,CITY,STATE,POSTALCODE,COUNTRY,EMPLOYEENUMBER,CREDITLIMIT,TERRITORY,TERRITORY_COLOR  into outfile '/tmp/customer_w_ter.csv' fields optionally enclosed by '"' terminated by ',' lines terminated by '\n' from customer_w_ter;
 select REGION, MANAGER_NAME, EMAIL into outfile '/tmp/department_managers.csv' fields terminated by ',' lines terminated by '\n' from department_managers;
@@ -37,8 +46,13 @@ select ordernumber, orderdate,requireddate,shippeddate,status,comments,customern
 select customernumber,checknumber,paymentdate,amount into outfile '/tmp/payments.csv' fields terminated by ',' lines terminated by '\n' from payments;
 select productcode,productname,productline,productscale,productvendor,productdescription,quantityinstock,buyprice,msrp into outfile '/tmp/products.csv' fields optionally enclosed by '"' terminated by ',' lines terminated by '\n' from products;
 
+``` 
+
 Copy the CSV Files to root’s home directory on the Sandbox
 On the Mac,
+
+``` 
+
 cd /tmp
 
 scp customers.csv root@sandbox.hortonworks.com:~
@@ -53,8 +67,14 @@ scp orders.csv root@sandbox.hortonworks.com:~
 scp payments.csv root@sandbox.hortonworks.com:~
 scp products.csv root@sandbox.hortonworks.com:~
 
+``` 
+
+
 Create Tables in Phoenix – Used PDI copy tables job to get the DDL – Had to change a couple data types
 On the Sandbox,
+
+``` 
+
 cd /usr/hdp/current/phoenix-server/bin
 ./sqlline.py sandbox.hortonworks.com:16000/hbase
 
@@ -80,9 +100,12 @@ CREATE TABLE PAYMENTS (   CUSTOMERNUMBER INTEGER PRIMARY KEY, CHECKNUMBER VARCHA
 
 CREATE TABLE PRODUCTS (   PRODUCTCODE VARCHAR(50) PRIMARY KEY, PRODUCTNAME VARCHAR(70) , PRODUCTLINE VARCHAR(50) , PRODUCTSCALE VARCHAR(10) , PRODUCTVENDOR VARCHAR(50) , PRODUCTDESCRIPTION VARCHAR(10000) , QUANTITYINSTOCK INTEGER , BUYPRICE BIGINT , MSRP BIGINT ) ;
 
+``` 
 
-Load the data into HBASE
+#Load the data into HBASE
 On the Sandbox,
+
+```
 cd /usr/hdp/current/phoenix-server/bin
 
 ./psql.py -t CUSTOMERS sandbox.hortonworks.com ~/customers.csv
@@ -97,11 +120,17 @@ cd /usr/hdp/current/phoenix-server/bin
 ./psql.py -t PAYMENTS sandbox.hortonworks.com ~/payments.csv
 ./psql.py -t PRODUCTS sandbox.hortonworks.com ~/products.csv
 
-Install the Phoenix driver into BA Server
-On the Sandbox,
-scp /usr/hdp/2.3.0.0-2557/phoenix/phoenix-4.4.0.2.3.0.0-2557-client.jar bhagan@yourhost:~/Downloads/biserver-ce/tomcat/lib
+```
 
-Create a new BA Server Connection using the Phoenix Driver
+#Install the Phoenix driver into BA Server
+On the Sandbox,
+
+```
+scp /usr/hdp/2.3.0.0-2557/phoenix/phoenix-4.4.0.2.3.0.0-2557-client.jar bhagan@yourhost:~/Downloads/biserver-ce/tomcat/lib
+```
+
+
+#Create a new BA Server Connection using the Phoenix Driver
 Name: Phoenix
 Type: Generic Database
 Custom Connection URL: jdbc:phoenix:sandbox.hortonworks.com:16000/hbase
@@ -120,6 +149,7 @@ Now you can create new reports and analysis. Also, you can copy your exisiting s
 Troubleshooting
 Using the same Phoenix driver that I used in the BA Server, I am unable to make a new Generic Connection in PDI. I also added the Phoenix core jar, but that didn’t help:
 
+```
 Error connecting to database [Phoenix] : org.pentaho.di.core.exception.KettleDatabaseException: 
 Error occurred while trying to connect to the database
 
@@ -251,3 +281,5 @@ at org.apache.phoenix.query.ConnectionQueryServicesImpl.checkClientServerCompati
 
 Custom URL     :  jdbc:phoenix:sandbox.hortonworks.com:16000/hbase
 Custom Driver Class:org.apache.phoenix.jdbc.PhoenixDriver
+
+```
