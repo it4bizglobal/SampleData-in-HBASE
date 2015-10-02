@@ -1,11 +1,11 @@
 
 
-Why did I do this?
+##Why did I do this?
 Just because.
 To demonstrate that you can store OLAP data in HBASE and perform reporting and analytics via Phoenix in my favorite BI Tool.
 To help demonstrate all of the existing reports using HBASE.
 
-Software Used
+##Software Used
 PDI 5.4.0.1-130
 BA Server 5.4.0.1-130
 HDP 2.3 Sandbox
